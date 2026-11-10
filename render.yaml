@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: assiny-mcp
+    runtime: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: ASSINY_API_KEY
+        sync: false
+      - key: ASSINY_PROJECT_ID
+        sync: false
+      - key: MCP_ACCESS_TOKEN
+        generateValue: true
