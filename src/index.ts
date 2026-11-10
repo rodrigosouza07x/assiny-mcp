@@ -1,5 +1,6 @@
 import express, { type Request, type Response as ExpressResponse } from "express";
 import { timingSafeEqual } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
@@ -9,6 +10,9 @@ const API_KEY = process.env.ASSINY_API_KEY ?? "";
 const PROJECT_ID = process.env.ASSINY_PROJECT_ID ?? "";
 const ACCESS_TOKEN = process.env.MCP_ACCESS_TOKEN ?? "";
 const PORT = Number(process.env.PORT ?? 3000);
+// O Render define RENDER_EXTERNAL_URL automaticamente.
+const PUBLIC_URL = (process.env.RENDER_EXTERNAL_URL ?? "https://assiny-mcp.onrender.com").replace(/\/$/, "");
+const ASSETS_DIR = fileURLToPath(new URL("../assets/", import.meta.url));
 
 // ---------------------------------------------------------------------------
 // Cliente HTTP da Assiny (único ponto que coloca os cabeçalhos)
@@ -114,7 +118,12 @@ const SALE_STATUS = [
 // ---------------------------------------------------------------------------
 
 function buildServer(): McpServer {
-  const server = new McpServer({ name: "assiny-mcp", version: "1.0.0" });
+  const server = new McpServer({
+    name: "assiny-mcp",
+    title: "Assiny",
+    version: "1.0.0",
+    icons: [{ src: `${PUBLIC_URL}/logo.png`, mimeType: "image/png", sizes: ["512x512"] }],
+  });
 
   server.registerTool(
     "listar_produtos",
@@ -239,6 +248,16 @@ app.use(express.json({ limit: "1mb" }));
 
 app.get("/", (_req, res) => {
   res.json({ name: "assiny-mcp", status: "ok" });
+});
+
+// Logo do conector (favicon e ícone declarado no serverInfo)
+app.get("/favicon.ico", (_req, res) => {
+  res.set("Cache-Control", "public, max-age=86400");
+  res.type("image/x-icon").sendFile(ASSETS_DIR + "favicon.ico");
+});
+app.get("/logo.png", (_req, res) => {
+  res.set("Cache-Control", "public, max-age=86400");
+  res.type("image/png").sendFile(ASSETS_DIR + "logo.png");
 });
 
 app.get("/health", (_req, res) => {
